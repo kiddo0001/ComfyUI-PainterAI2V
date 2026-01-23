@@ -1,3 +1,4 @@
+# 此项目包含ComfyUI-PainterAI2V（音频驱动图生视频）和PainterAV2V（音频驱动视频对口型）2个节点！由 绘画小子 制作
 # ComfyUI-PainterAI2V
 
 ---
@@ -36,20 +37,6 @@
 
 ---
 
-## 安装 / Installation
-
-1. 将节点包放入 `ComfyUI/custom_nodes/` 目录
-2. 重启 ComfyUI
-3. 节点位于 `conditioning/video_models` 分类下
-
----
-
-1. Place the node package in `ComfyUI/custom_nodes/` directory
-2. Restart ComfyUI
-3. Node is located in `conditioning/video_models` category
-
----
-
 
 ## 核心参数 / Core Parameters
 
@@ -63,19 +50,36 @@
 | `end_image` | 尾帧图像，视频最终定格此画面 | Last frame image, video ends at this frame |
 
 ---
+# PainterAV2V - Audio-Driven Video Lip Sync Node
 
-## 技术亮点 / Technical Highlights
+# PainterAV2V - 音频驱动视频对口型节点
 
-- **智能帧率换算**：内部采用 50fps→`video_fps` 的动态插值，确保任意帧率下口型精准同步
-- **双模型同步补丁**：同时对高/低噪模型应用 InfiniteTalk 补丁，避免采样阶段效果丢失
-- **零漂移设计**：运动帧 latent 与音频特征在时序上严格对齐，保证长视频生成稳定性
-- **显存友好**：支持逐批处理，大分辨率下可通过拆分降低显存占用
-- **首帧尾帧 mask 保护**：首尾帧区域自动设置 mask=0，确保关键帧像素不被破坏
-
+<img width="972" height="740" alt="image" src="https://github.com/user-attachments/assets/56963625-1f7b-497c-9611-5a65b94ac3e5" />
 ---
 
-- **Intelligent Frame Rate Conversion**: Internal dynamic interpolation from 50fps→`video_fps` ensures precise lip-sync at any frame rate
-- **Dual-Model Synchronous Patching**: Simultaneously applies InfiniteTalk patches to both high/low noise models, preventing effect loss during sampling stages
-- **Zero-Drift Design**: Motion frame latents and audio features are strictly temporally aligned, ensuring stability for long video generation
-- **Memory-Friendly**: Supports batch-by-batch processing, allows splitting to reduce VRAM usage at high resolutions
-- **First/Last Frame Mask Protection**: Automatic mask=0 for first/last frame areas, ensuring keyframe pixels remain intact
+**One-sentence Intro / 一句话介绍**  
+A streamlined ComfyUI node that combines VAE encoding with WanInfiniteTalk lip-sync technology, allowing precise mouth synchronization by custom frame rate settings.
+
+一个精简的ComfyUI节点，融合VAE编码与WanInfiniteTalk对口型技术，支持自定义帧率实现精准口型同步。
+
+---
+<img width="2191" height="1228" alt="image" src="https://github.com/user-attachments/assets/cefd9d1f-e840-44fb-b6da-73293a39c871" />
+
+**Key Features / 功能特点**
+
+
+
+- **Customizable Frame Rate / 自定义帧率**  
+  Set target FPS (1-60) to ensure lip movements align perfectly with audio timing.  
+  可设置目标帧率(1-60)，确保口型与音频节奏精准对齐。
+
+- **Smart Audio Processing / 智能音频处理**  
+  Automatically interpolates audio features to match video length and frame rate.  
+  自动插值音频特征以匹配视频长度与帧率。
+
+- **Flexible Inputs / 灵活输入**  
+  Supports video sequence, audio encoder output, reference image, and optional mask for latent encoding.  
+  支持视频序列、音频编码输出、参考图及可选遮罩输入。
+
+
+
