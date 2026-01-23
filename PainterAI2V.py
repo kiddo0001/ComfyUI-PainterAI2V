@@ -14,7 +14,7 @@ from comfy_api.latest import ComfyExtension, io
 import logging
 
 class PainterAI2V(io.ComfyNode):
-    """Painted InfiniteTalk for Wan2.2 dual-model with adjustable FPS sync"""
+    """Painted InfiniteTalk for Wan2.2 dual-model with adjustable FPS sync and first/last frame support"""
     
     class DCValues(TypedDict):
         mode: str
@@ -48,6 +48,7 @@ class PainterAI2V(io.ComfyNode):
                 io.Float.Input("video_fps", default=20.0, min=1.0, max=120.0, step=0.01, tooltip="Video output frame rate - audio lip-sync will match this"),
                 io.ClipVisionOutput.Input("clip_vision_output", optional=True),
                 io.Image.Input("start_image", optional=True),
+                io.Image.Input("end_image", optional=True),
                 io.AudioEncoderOutput.Input("audio_encoder_output_1", display_name="audio_encoder"),
                 io.Int.Input("motion_frame", default=9, min=1, max=33, step=1, tooltip="Number of previous frames to use as motion context."),
                 io.Float.Input("audio_scale", default=1.0, min=-10.0, max=10.0, step=0.01),
@@ -65,7 +66,7 @@ class PainterAI2V(io.ComfyNode):
 
     @classmethod
     def execute(cls, mode: DCValues, model_high_noise, model_low_noise, model_patch, positive, negative, vae, width, height, length, video_fps, audio_encoder_output_1, motion_frame,
-                start_image=None, previous_frames=None, audio_scale=None, clip_vision_output=None, audio_encoder_output_2=None, mask_1=None, mask_2=None) -> io.NodeOutput:
+                start_image=None, end_image=None, previous_frames=None, audio_scale=None, clip_vision_output=None, audio_encoder_output_2=None, mask_1=None, mask_2=None) -> io.NodeOutput:
 
         # Validate inputs
         if previous_frames is not None and previous_frames.shape[0] < motion_frame:
@@ -89,19 +90,30 @@ class PainterAI2V(io.ComfyNode):
         # Prepare latent
         latent = torch.zeros([1, 16, ((length - 1) // 4) + 1, height // 8, width // 8], device=comfy.model_management.intermediate_device())
         
-        # Process start image
+        # Process start and end images
         concat_latent_image = None
         if start_image is not None:
             start_image = comfy.utils.common_upscale(start_image[:length].movedim(-1, 1), width, height, "bilinear", "center").movedim(1, -1)
-            image = torch.ones((length, height, width, start_image.shape[-1]), device=start_image.device, dtype=start_image.dtype) * 0.5
+        if end_image is not None:
+            end_image = comfy.utils.common_upscale(end_image[-length:].movedim(-1, 1), width, height, "bilinear", "center").movedim(1, -1)
+
+        # Create image tensor with middle frames as gray
+        image = torch.ones((length, height, width, 3), device=comfy.model_management.intermediate_device(), dtype=torch.float32) * 0.5
+        mask = torch.ones((1, 1, latent.shape[2] * 4, latent.shape[-2], latent.shape[-1]), device=image.device, dtype=image.dtype)
+
+        if start_image is not None:
             image[:start_image.shape[0]] = start_image
+            mask[:, :, :start_image.shape[0] + 3] = 0.0
 
-            concat_latent_image = vae.encode(image[:, :, :, :3])
-            concat_mask = torch.ones((1, 1, latent.shape[2], concat_latent_image.shape[-2], concat_latent_image.shape[-1]), device=start_image.device, dtype=start_image.dtype)
-            concat_mask[:, :, :((start_image.shape[0] - 1) // 4) + 1] = 0.0
+        if end_image is not None:
+            image[-end_image.shape[0]:] = end_image
+            mask[:, :, -end_image.shape[0]:] = 0.0
 
-            positive = node_helpers.conditioning_set_values(positive, {"concat_latent_image": concat_latent_image, "concat_mask": concat_mask})
-            negative = node_helpers.conditioning_set_values(negative, {"concat_latent_image": concat_latent_image, "concat_mask": concat_mask})
+        # Encode and set conditioning
+        concat_latent_image = vae.encode(image[:, :, :, :3])
+        mask = mask.view(1, mask.shape[2] // 4, 4, mask.shape[3], mask.shape[4]).transpose(1, 2)
+        positive = node_helpers.conditioning_set_values(positive, {"concat_latent_image": concat_latent_image, "concat_mask": mask})
+        negative = node_helpers.conditioning_set_values(negative, {"concat_latent_image": concat_latent_image, "concat_mask": mask})
 
         # Process clip vision
         if clip_vision_output is not None:
@@ -164,7 +176,7 @@ class PainterAI2V(io.ComfyNode):
         else:
             audio_start = trim_image = 0
             audio_end = length
-            motion_frames_latent = concat_latent_image[:, :, :1] if concat_latent_image is not None else torch.zeros_like(latent[:, :, :1])
+            motion_frames_latent = concat_latent_image[:, :, :1]
 
         # Patch both models
         def patch_model(model, model_name):
