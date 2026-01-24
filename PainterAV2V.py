@@ -9,11 +9,6 @@ from comfy_api.latest import io
 
 
 def linear_interpolation(features, input_fps, output_fps, output_len=None):
-    """
-    features: shape=[num_layers, T, dim]
-    input_fps: fps for audio encoder output (usually 50 for wav2vec2)
-    output_fps: target video fps (user specified)
-    """
     features = features.transpose(1, 2)
     seq_len = features.shape[2] / float(input_fps)
     if output_len is None:
@@ -60,7 +55,15 @@ class PainterAV2V(io.ComfyNode):
 
     @classmethod
     def execute(cls, model, model_patch, positive, negative, vae, width, height, length, fps, audio_encoder, video, mask=None, start_image=None, clip_vision_output=None, audio_scale=1.0) -> io.NodeOutput:
-        # VAE Encode video (VAEEncode functionality)
+        device = comfy.model_management.get_torch_device()
+        model_dtype = model.model_dtype()
+        
+        # FP8 does not support direct CUDA operations like mul, so fallback to FP16 for compute tensors
+        if model_dtype == torch.float8_e4m3fn:
+            compute_dtype = torch.float16
+        else:
+            compute_dtype = model_dtype
+        
         latent_video = vae.encode(video)
         out_latent = {"samples": latent_video}
         if mask is not None:
@@ -68,15 +71,14 @@ class PainterAV2V(io.ComfyNode):
                 mask = mask.unsqueeze(1)
             out_latent["noise_mask"] = mask
 
-        # Process start_image for conditioning (from WanInfiniteTalkToVideo)
         concat_latent_image = None
         if start_image is not None:
             start_image_proc = comfy.utils.common_upscale(start_image[:length].movedim(-1, 1), width, height, "bilinear", "center").movedim(1, -1)
-            image = torch.ones((length, height, width, start_image_proc.shape[-1]), device=start_image_proc.device, dtype=start_image_proc.dtype) * 0.5
-            image[:start_image_proc.shape[0]] = start_image_proc
+            image = torch.ones((length, height, width, start_image_proc.shape[-1]), device=device, dtype=compute_dtype) * 0.5
+            image[:start_image_proc.shape[0]] = start_image_proc.to(device=device, dtype=compute_dtype)
 
-            concat_latent_image = vae.encode(image[:, :, :, :3])
-            concat_mask = torch.ones((1, 1, ((length - 1) // 4) + 1, concat_latent_image.shape[-2], concat_latent_image.shape[-1]), device=start_image_proc.device, dtype=start_image_proc.dtype)
+            concat_latent_image = vae.encode(image[:, :, :, :3].contiguous())
+            concat_mask = torch.ones((1, 1, ((length - 1) // 4) + 1, concat_latent_image.shape[-2], concat_latent_image.shape[-1]), device=device, dtype=compute_dtype)
             concat_mask[:, :, :((start_image_proc.shape[0] - 1) // 4) + 1] = 0.0
 
             positive = node_helpers.conditioning_set_values(positive, {"concat_latent_image": concat_latent_image, "concat_mask": concat_mask})
@@ -86,31 +88,26 @@ class PainterAV2V(io.ComfyNode):
             positive = node_helpers.conditioning_set_values(positive, {"clip_vision_output": clip_vision_output})
             negative = node_helpers.conditioning_set_values(negative, {"clip_vision_output": clip_vision_output})
 
-        # Process audio with configurable fps (from WanInfiniteTalkToVideo, single speaker only)
         model_patched = model.clone()
-
+        
         all_layers = audio_encoder["encoded_audio_all_layers"]
-        encoded_audio = torch.stack(all_layers, dim=0).squeeze(1)[1:]  # shape: [num_layers, T, 512]
-        # Use user-specified fps instead of hardcoded 25
-        encoded_audio = linear_interpolation(encoded_audio, input_fps=50, output_fps=fps).movedim(0, 1)  # shape: [T, num_layers, 512]
+        encoded_audio = torch.stack(all_layers, dim=0).squeeze(1)[1:]
+        encoded_audio = encoded_audio.to(device=device, dtype=compute_dtype).contiguous()
+        encoded_audio = linear_interpolation(encoded_audio, input_fps=50, output_fps=fps).movedim(0, 1)
 
-        # Single speaker mode: no two-speaker support, no previous frames
         encoded_audio_list = [encoded_audio]
         audio_start = 0
         audio_end = length
 
-        # Prepare motion frames latent for outer sample wrapper
-        # Use first frame of concat_latent_image if available, else zeros
         if concat_latent_image is not None:
-            motion_frames_latent = concat_latent_image[:, :, :1]
+            motion_frames_latent = concat_latent_image[:, :, :1].contiguous().to(device=device, dtype=compute_dtype)
         else:
-            motion_frames_latent = torch.zeros([1, 16, 1, height // 8, width // 8], device=comfy.model_management.intermediate_device())
+            motion_frames_latent = torch.zeros([1, 16, 1, height // 8, width // 8], device=device, dtype=compute_dtype).contiguous()
 
-        # Project audio features
-        audio_embed = project_audio_features(model_patch.model.audio_proj, encoded_audio_list, audio_start, audio_end).to(model_patched.model_dtype())
+        audio_embed = project_audio_features(model_patch.model.audio_proj, encoded_audio_list, audio_start, audio_end)
+        audio_embed = audio_embed.to(device=device, dtype=compute_dtype).contiguous()
         model_patched.model_options["transformer_options"]["audio_embeds"] = audio_embed
 
-        # Add outer sample wrapper and patches (is_extend=False since no previous_frames)
         model_patched.add_wrapper_with_key(
             comfy.patcher_extension.WrappersMP.OUTER_SAMPLE,
             "infinite_talk_outer_sample",
