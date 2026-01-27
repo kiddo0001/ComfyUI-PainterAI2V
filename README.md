@@ -58,9 +58,9 @@
 ---
 
 **One-sentence Intro / 一句话介绍**  
-A streamlined ComfyUI node that combines VAE encoding with WanInfiniteTalk lip-sync technology, allowing precise mouth synchronization by custom frame rate settings.
+A streamlined ComfyUI node that allowing precise mouth synchronization by custom frame rate settings with InfiniteTalk lip-sync technology
 
-一个精简的ComfyUI节点，融合VAE编码与WanInfiniteTalk对口型技术，支持自定义帧率实现精准口型同步。
+一个精简的ComfyUI节点，支持InfiniteTalk对口型技术，对视频进行自定义帧率实现精准口型同步。
 
 ---
 <img width="2191" height="1228" alt="image" src="https://github.com/user-attachments/assets/cefd9d1f-e840-44fb-b6da-73293a39c871" />
