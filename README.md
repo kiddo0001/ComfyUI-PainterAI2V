@@ -63,7 +63,8 @@ A streamlined ComfyUI node that allowing precise mouth synchronization by custom
 一个精简的ComfyUI节点，支持InfiniteTalk对口型技术，对视频进行自定义帧率实现精准口型同步。
 
 ---
-<img width="2191" height="1228" alt="image" src="https://github.com/user-attachments/assets/cefd9d1f-e840-44fb-b6da-73293a39c871" />
+<img width="1908" height="918" alt="image" src="https://github.com/user-attachments/assets/3b7a9d35-29b0-4abd-be9e-93523c370738" />
+
 
 **Key Features / 功能特点**
 
