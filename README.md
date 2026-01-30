@@ -18,6 +18,10 @@
 - **简化接口设计**：输入输出端口重命名为 `high_model`/`low_model`/`audio_encoder`，节点面板更清爽直观
 - **全功能保留**：支持单人/双人对口型、motion context、previous frames 延续生成等所有原生功能
 
+- 图片+音频 生视频
+<img width="2709" height="1191" alt="image" src="https://github.com/user-attachments/assets/ee5e719a-3eef-4148-868b-10310100352f" />
+
+首尾帧+音频 生视频
 ---<img width="2706" height="1375" alt="image" src="https://github.com/user-attachments/assets/6d4eea34-0de7-448f-bd32-d5cd2b4f7e30" />
 
 
