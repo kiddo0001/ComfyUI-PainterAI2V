@@ -1,4 +1,4 @@
-# 此项目包含ComfyUI-PainterAI2V（音频驱动图生视频）和PainterAV2V（音频驱动视频对口型）2个节点！由 绘画小子 制作
+# 此项目包含ComfyUI-PainterAI2V（音频驱动图生视频）和PainterAV2V（音频驱动视频对口型）2个节点（对comfyui官方infinitetalk节点添加功能优化而成） 由 绘画小子 制作
 # ComfyUI-PainterAI2V
 
 ---
